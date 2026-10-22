@@ -1,33 +1,66 @@
 @import "tailwindcss";
 
 /*
- * M corporate brand tokens. Colours come from m-bank.mn/corporate.
- * The intro canvas reads the same variables, so changing a token here
- * recolours both the UI and the animation.
+ * M corporate brand tokens. Colours come from m-bank.mn/corporate and the
+ * Business Bank Figma file. The intro canvas reads the same variables, so
+ * changing a token here recolours both the UI and the animation.
  */
 /* `static` keeps every token as a CSS variable even if no utility uses it — the canvas reads them at runtime. */
 @theme static {
+  /* dark stage (intro, brand panel) */
   --color-stage: #030504;
   --color-ink: #f4f7f6;
   --color-muted: #8a9097;
   --color-line: #272b2e;
   --color-surface: #0e1112;
+
+  /* brand */
   --color-brand: #21cda8;
   --color-brand-deep: #169b80;
   --color-on-brand: #02130f;
+
+  /* light internet bank */
+  --color-page: #ffffff;
+  --color-app: #f5f6f8;
+  --color-field: #f0f1f4;
+  --color-fg: #0d0f12;
+  --color-fg-muted: #6b7079;
+  --color-fg-faint: #a3a8b0;
+  --color-hairline: #e6e8ec;
+  --color-action: #0d0f12;
+  --color-on-action: #ffffff;
+
+  /* status */
   --color-danger: #ff6b5e;
+  --color-error: #d4412c;
+  --color-error-bg: #fdeeeb;
+  --color-warn: #b45f06;
+  --color-warn-bg: #fff2df;
+  --color-ok: #0f8a6c;
+  --color-ok-bg: #e3f7f1;
+  --color-info: #4f55c9;
+  --color-info-bg: #eef0ff;
 
   --font-sans: var(--font-tt-firs), ui-sans-serif, system-ui, sans-serif;
   --font-mono: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace;
 }
 
 :root {
-  color-scheme: dark;
+  color-scheme: light;
+  /* login layout: the form column width; the brand panel takes the rest */
+  --login-form-w: clamp(440px, 34vw, 608px);
+  --login-gap: 24px;
 }
 
 html,
 body {
   height: 100%;
+}
+
+body {
+  background: var(--color-page);
+  color: var(--color-fg);
+  -webkit-font-smoothing: antialiased;
 }
 
 @keyframes fade-in {
@@ -37,8 +70,34 @@ body {
   }
 }
 
-body {
+/*
+ * The intro layer is a full-viewport canvas that is clipped to the brand panel
+ * while you sign in. On a first login with temporary credentials the clip opens
+ * to the full screen ("takeover"), so the same particles grow into the intro.
+ */
+.intro-layer {
+  position: fixed;
+  inset: 0;
+  z-index: 20;
   background: var(--color-stage);
-  color: var(--color-ink);
-  -webkit-font-smoothing: antialiased;
+  clip-path: circle(0px at var(--ox, 50%) var(--oy, 85%));
+  transition: clip-path 900ms cubic-bezier(0.7, 0, 0.2, 1);
+}
+.intro-layer[data-takeover="true"] {
+  clip-path: circle(150vmax at var(--ox, 50%) var(--oy, 85%));
+}
+@media (min-width: 1024px) {
+  .intro-layer {
+    clip-path: inset(
+      var(--login-gap) calc(var(--login-form-w) + 2 * var(--login-gap)) var(--login-gap) var(--login-gap) round 28px
+    );
+  }
+  .intro-layer[data-takeover="true"] {
+    clip-path: inset(0px 0px 0px 0px round 0px);
+  }
+}
+@media (prefers-reduced-motion: reduce) {
+  .intro-layer {
+    transition: none;
+  }
 }

@@ -2,8 +2,15 @@ import { EXTRUSION, FRONT, M_POLYGON, WINDOW } from './geometry';
 
 const LAYERS = 5;
 
+interface MCorporateMarkProps {
+  className?: string;
+  title?: string;
+  /** `dark`: dark window, white M (for dark backgrounds). `light`: white window, dark M. */
+  tone?: 'dark' | 'light';
+}
+
 /** Static vector version of the M mark, drawn from the same geometry as the animation. */
-export function MCorporateMark({ className, title }: { className?: string; title?: string }) {
+export function MCorporateMark({ className, title, tone = 'dark' }: MCorporateMarkProps) {
   const [fx, fy, fw, fh, fr] = FRONT;
   const [wx, wy, ww, wh, wr] = WINDOW;
   return (
@@ -15,8 +22,8 @@ export function MCorporateMark({ className, title }: { className?: string; title
           return <rect key={i} x={fx + EXTRUSION[0] * t} y={fy + EXTRUSION[1] * t} width={fw} height={fh} rx={fr} />;
         })}
       </g>
-      <rect className="fill-stage" x={wx} y={wy} width={ww} height={wh} rx={wr} />
-      <polygon className="fill-ink" points={M_POLYGON.map(([x, y]) => `${x},${y}`).join(' ')} />
+      <rect className={tone === 'dark' ? 'fill-stage' : 'fill-page'} x={wx} y={wy} width={ww} height={wh} rx={wr} />
+      <polygon className={tone === 'dark' ? 'fill-ink' : 'fill-fg'} points={M_POLYGON.map(([x, y]) => `${x},${y}`).join(' ')} />
     </svg>
   );
 }

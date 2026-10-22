@@ -1,8 +1,10 @@
-# M corporate onboarding intro
+# M corporate — login and first-login intro
 
-A Next.js App Router project that adds a Mercury-style particle intro to M corporate onboarding. The particles form a galaxy, then a sphere, then assemble the extruded M mark and settle into the **M corporate** lockup.
+Redesign of the M corporate internet-bank login, following the digital onboarding flow in the *Business Bank – New* Figma file (Onboard page).
 
-Stack: Next.js 16 (App Router) · TypeScript · Tailwind CSS 4 · React Hook Form + Zod · Motion. The animation is plain Canvas 2D with no runtime dependency.
+During digital onboarding a customer creates a login name and password that are **valid for 30 days**. The **first** time they sign in with those temporary credentials, the brand panel opens to full screen and a particle intro plays: galaxy, then sphere, then the 3D M mark, then **"M corporate — Тавтай морил, ‹organisation›"**. It then hands off to the internet bank, where they verify their registration. Later logins, and logins with permanent credentials, go straight in.
+
+Stack: Next.js 16 (App Router, static export) · TypeScript · Tailwind CSS 4 · React Hook Form + Zod · Motion · lucide-react. The intro is plain Canvas 2D.
 
 ## Run it
 
@@ -11,75 +13,67 @@ npm install
 npm run dev      # http://localhost:3000
 ```
 
-| Route         | What it is                                                         |
-| ------------- | ------------------------------------------------------------------ |
-| `/`           | Onboarding form wired to the intro                                 |
-| `/dashboard/` | Placeholder page the intro hands off to                            |
-| `/playground/` | Review tool: scrub, replay, play at 0.5× or 0.25×                 |
+| Route          | What it is                                                                 |
+| -------------- | -------------------------------------------------------------------------- |
+| `/`            | Login: brand panel with the live star field, organisation / M Sign tabs    |
+| `/home/`       | Internet bank home: registration verification, DAN welcome, session timer  |
+| `/playground/` | Review tool for the intro: scrub, replay, play at 0.5× or 0.25×            |
 
-In the demo, register number **0000000** makes the mock request fail, so you can see the error path.
+### Test accounts (prototype only)
+
+| Login name    | Password        | What happens                                                   |
+| ------------- | --------------- | -------------------------------------------------------------- |
+| `popy`        | `Popy@2026`     | Temporary credentials, first login → intro → home + DAN popup  |
+| `merchant123` | `Merchant@2026` | Permanent credentials → straight in, everything unlocked       |
+| `expired`     | `Expired@2026`  | Temporary credentials older than 30 days → error message       |
+
+After `popy` has logged in once, later logins skip the intro, as they would in production. Use **"Анхны нэвтрэлтийг сэргээх"** under the form to see the intro again. The accounts list is in `src/features/auth/api.ts`, and the `DemoAccounts` box on the login page should be removed before release.
+
+## The flow in code
+
+```
+src/features/login/LoginExperience.tsx
+  form      sign in (signIn) ─┬─ permanent / already activated → /home
+                              └─ first login with temporary credentials
+  takeover  panel opens to full screen, particles gather   ← prepareWorkspace() runs
+  building  M mark assembles, welcome with the organisation name
+  done      1.3 s on the lockup → /home      ("Алгасах" skips straight there)
+
+src/features/home/InternetBankHome.tsx
+  opens on the same final frame (WelcomeHandoff), fades it out,
+  then shows the DAN welcome ("Өдрийн мэнд") once
+```
+
+The takeover reuses one full-viewport canvas. The brand panel is that canvas clipped with `clip-path`, and on a first login the clip opens to the full screen (`.intro-layer` in `globals.css`). On phones the clip grows as a circle from the "Нэвтрэх" button.
+
+### Connecting the real backend
+
+- `signIn(username, password)` must return `{ session, firstLogin }`, where `firstLogin` should come from the server (first use of temporary credentials). It throws `AuthError('invalid' | 'expired')` with the message to show.
+- `prepareWorkspace()` loads whatever the first screen needs, and the intro covers that wait.
+- Sessions live in `sessionStorage` here (`src/features/auth/session.ts`). In production, use the auth service's cookie and `/me` instead.
+- The DAN button simulates a successful fill. In production it redirects to DAN sign-in.
+
+## Intro component
+
+`<LazyMCorporateIntro phase caption initialTime onSettle />` from `src/components/m-corporate-intro`:
+
+| Prop          | Meaning                                                                          |
+| ------------- | -------------------------------------------------------------------------------- |
+| `phase`       | `idle` star field · `gather` swirl into a spinning sphere (holds) · `build` mark + lockup |
+| `caption`     | Line under the lockup, `{ lead, accent }` (accent in brand green)                |
+| `initialTime` | Open at a timeline position. `TIMELINE.total` opens on the finished lockup       |
+| `onSettle`    | Fires when the current phase finishes                                            |
+
+People with **reduce motion** turned on skip straight to the end of each phase. Colours come from the Tailwind tokens in `globals.css`, which the canvas reads at runtime.
 
 ## Deploy to Cloudflare
 
-The app is a static export (`output: 'export'` in `next.config.ts`), so it needs no server.
-
 ```bash
-npm run build    # writes the site to ./out
+npm run build    # static site in ./out
 ```
 
-Then either:
+Cloudflare → Workers & Pages → Create → Pages → Upload assets → drop the contents of `out/` (or a zip with `index.html` at the root) → Deploy. Or run `npx wrangler pages deploy out --project-name m-corporate`.
 
-- **Dashboard upload:** Cloudflare → Workers & Pages → Create → Pages → Upload assets → name the project → drop the contents of `out/` (or a zip of them, with `index.html` at the root) → Deploy.
-- **CLI:** `npx wrangler pages deploy out --project-name m-corporate-onboarding`
+## Font
 
-When the real backend is wired in, keep the request on the client (as `connectOrganization` does now), or move off static export if it needs server code.
-
-## How the intro is driven
-
-`<LazyMCorporateIntro phase={…} onSettle={…} />` is the only API the page needs.
-
-| Phase    | What the user sees                                                               | Settles when                  |
-| -------- | -------------------------------------------------------------------------------- | ----------------------------- |
-| `idle`   | Star field. Coming from another phase, the animation rewinds to it               | Back at 0 s                   |
-| `gather` | Stars swirl into a galaxy disk, then a sphere that keeps spinning while you wait | Reaches the hold point (4.6 s) |
-| `build`  | Sphere assembles the 3D mark, then the crisp lockup and tagline                  | End of the timeline (10.8 s)  |
-
-`src/features/onboarding/OnboardingExperience.tsx` maps form state to phases:
-
-- **submit** → `gather` (the request is running)
-- **request succeeds** → `build` → on settle, wait 1.4 s and `router.push('/dashboard')`
-- **request fails** → `idle` (rewinds) → on settle, the form returns with the error and the user's values kept
-
-To connect the real backend, replace `connectOrganization` in `src/features/onboarding/api.ts`. The animation only needs the promise to resolve or reject.
-
-## Files
-
-```
-src/components/m-corporate-intro/
-  engine.ts               Canvas engine: particles, cameras, timeline, phase gates
-  geometry.ts             M mark geometry (measured from the official logo) + rasteriser
-  MCorporateIntro.tsx     Client component ('use client'), typed props, ref handle for tools
-  LazyMCorporateIntro.tsx next/dynamic wrapper, ssr: false, keeps the engine out of other routes
-  MCorporateMark.tsx      Static SVG mark built from the same geometry
-src/features/onboarding/
-  schema.ts               Zod schema (register 7 digits, email, phone 8 digits, terms)
-  OnboardingForm.tsx      React Hook Form + zodResolver
-  StatusPill.tsx          Status messages with Motion
-  api.ts                  Mock request — replace with the real one
-src/fonts/                TT Firs Text via next/font/local
-```
-
-## Brand tokens
-
-Colours live once, in `src/app/globals.css` (`@theme static`). The canvas reads the same CSS variables at runtime, so changing `--color-brand` recolours both the UI and the animation.
-
-## Accessibility and performance
-
-- Users with **reduce motion** turned on skip straight to the end of each phase, with no movement.
-- The canvas is `role="img"` with a Mongolian label; status changes are announced through an `aria-live` region.
-- 2,600 particles on desktop and 1,500 on small screens, drawn from pre-rendered dot sprites. Pixel ratio is capped at 2.
-- The engine is code-split and only loads on the onboarding route.
-
-## Font licence
-
-TT Firs Text is licensed to M Bank by TypeType for web use on **M Bank's own domains only** (see `Web-font-License.pdf` from the font package). Keep this repository private, and do not copy the font files to third-party hosts or public demos. The licence lists logos as needing a separate licence. The "corporate" wordmark in the final lockup is set in TT Firs, so swap in the brand team's official wordmark asset before release, or confirm the licence covers it.
+TT Firs Text (Normal, Medium, DemiBold) via `next/font/local` in `src/fonts`.

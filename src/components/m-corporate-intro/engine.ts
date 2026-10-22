@@ -38,10 +38,20 @@ const PHASE_TARGET: Record<IntroPhase, number> = {
 
 const REWIND_SPEED = 2.6;
 const WORDMARK = 'corporate';
-const TAGLINE: readonly [string, string] = ['Үргэлжлүүл, ', 'өргөжүүл'];
+
+/** Line under the lockup: `lead` in muted ink, `accent` in brand green. */
+export interface IntroCaption {
+  lead: string;
+  accent: string;
+}
+
+export const DEFAULT_CAPTION: IntroCaption = { lead: 'Үргэлжлүүл, ', accent: 'өргөжүүл' };
 
 export interface IntroEngineOptions {
   reducedMotion?: boolean;
+  caption?: IntroCaption;
+  /** Timeline position to start at, e.g. TIMELINE.total to open on the finished lockup. */
+  initialTime?: number;
   /** Called once each time the timeline reaches the target of the current phase. */
   onSettle?: (phase: IntroPhase) => void;
   /** Called every frame with the timeline position in seconds. */
@@ -55,6 +65,7 @@ export interface IntroEngine {
   /** Play toward a timeline position at the current speed. */
   playTo(t: number): void;
   setSpeed(speed: number): void;
+  setCaption(caption: IntroCaption): void;
   getTime(): number;
   destroy(): void;
 }
@@ -226,8 +237,10 @@ export function createIntroEngine(canvas: HTMLCanvasElement, options: IntroEngin
   window.addEventListener('pointermove', onPointer);
 
   // ---------- timeline state
-  let t = 0;
-  let target = 0;
+  const startT = Math.min(TIMELINE.total, Math.max(0, options.initialTime ?? 0));
+  let caption = options.caption ?? DEFAULT_CAPTION;
+  let t = startT;
+  let target = startT;
   let speed = 1;
   let phase: IntroPhase | null = null;
   let settled = true;
@@ -441,17 +454,24 @@ export function createIntroEngine(canvas: HTMLCanvasElement, options: IntroEngin
       }
       const tagIn = ease(clamp01((t - 9.95) / 0.75));
       if (tagIn > 0.001) {
-        const tfs = Math.max(15, Math.min(26, lockW * 0.062));
+        let tfs = Math.max(15, Math.min(26, lockW * 0.062));
         c.font = `500 ${tfs}px ${palette.font}`;
-        const w1 = c.measureText(TAGLINE[0]).width, w2 = c.measureText(TAGLINE[1]).width;
+        let w1 = c.measureText(caption.lead).width, w2 = c.measureText(caption.accent).width;
+        const room = W - 2 * Math.max(16, W * 0.05);
+        if (w1 + w2 > room) {
+          // long organisation names: shrink to fit the screen
+          const k2 = room / (w1 + w2);
+          tfs *= k2; w1 *= k2; w2 *= k2;
+          c.font = `500 ${tfs}px ${palette.font}`;
+        }
         const tx0 = W / 2 - (w1 + w2) / 2;
-        const ty = cy + MARK_CENTER[1] * sLock + tfs * 2.3 + (1 - tagIn) * 8;
+        const ty = cy + MARK_CENTER[1] * sLock + Math.max(tfs, 18) * 2.3 + (1 - tagIn) * 8;
         c.globalAlpha = tagIn;
         c.textBaseline = 'alphabetic';
         c.fillStyle = palette.muted;
-        c.fillText(TAGLINE[0], tx0, ty);
+        c.fillText(caption.lead, tx0, ty);
         c.fillStyle = palette.brand;
-        c.fillText(TAGLINE[1], tx0 + w1, ty);
+        c.fillText(caption.accent, tx0 + w1, ty);
       }
     }
     c.globalAlpha = 1;
@@ -501,6 +521,9 @@ export function createIntroEngine(canvas: HTMLCanvasElement, options: IntroEngin
     },
     setSpeed(next) {
       speed = next > 0 ? next : 1;
+    },
+    setCaption(next) {
+      caption = next;
     },
     getTime: () => t,
     destroy() {

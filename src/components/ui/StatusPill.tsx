@@ -18,7 +18,7 @@ export function StatusPill({ message, done = false }: StatusPillProps) {
             animate={{ opacity: 1, y: 0 }}
             exit={{ opacity: 0, y: -6 }}
             transition={{ duration: 0.3, ease: 'easeOut' }}
-            className="inline-flex min-h-8 items-center gap-2 rounded-full border border-line bg-surface py-1.5 pr-3 pl-2.5 text-[13px]"
+            className="inline-flex min-h-8 items-center gap-2 rounded-full border border-line bg-surface py-1.5 pr-3 pl-2.5 text-[13px] text-ink"
           >
             <span
               aria-hidden

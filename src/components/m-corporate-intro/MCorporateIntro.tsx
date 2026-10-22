@@ -2,7 +2,7 @@
 
 import { useEffect, useEffectEvent, useImperativeHandle, useRef, type Ref } from 'react';
 import { useReducedMotion } from 'motion/react';
-import { createIntroEngine, type IntroEngine, type IntroPhase } from './engine';
+import { createIntroEngine, type IntroCaption, type IntroEngine, type IntroPhase } from './engine';
 
 export interface MCorporateIntroHandle {
   /** Jump to a timeline position in seconds (review tools only). */
@@ -20,6 +20,10 @@ export interface MCorporateIntroProps {
    * Leave undefined when controlling the timeline through the ref.
    */
   phase?: IntroPhase;
+  /** Line under the final lockup, e.g. a welcome with the organisation's name. */
+  caption?: IntroCaption;
+  /** Timeline position to open at (read once on mount). Use TIMELINE.total to open on the lockup. */
+  initialTime?: number;
   /** Playback speed multiplier. */
   speed?: number;
   /** Fires once each time the current phase finishes. */
@@ -32,6 +36,8 @@ export interface MCorporateIntroProps {
 
 export default function MCorporateIntro({
   phase,
+  caption,
+  initialTime,
   speed = 1,
   onSettle,
   onTimeUpdate,
@@ -45,12 +51,14 @@ export default function MCorporateIntro({
   const handleSettle = useEffectEvent((p: IntroPhase) => onSettle?.(p));
   const handleTime = useEffectEvent((t: number) => onTimeUpdate?.(t));
   const initialPhase = useEffectEvent(() => phase);
+  const initialOptions = useEffectEvent(() => ({ caption, initialTime }));
 
   useEffect(() => {
     const canvas = canvasRef.current;
     if (!canvas) return;
     const engine = createIntroEngine(canvas, {
       reducedMotion,
+      ...initialOptions(),
       onSettle: (p) => handleSettle(p),
       onTimeUpdate: (t) => handleTime(t),
     });
@@ -70,6 +78,10 @@ export default function MCorporateIntro({
   useEffect(() => {
     engineRef.current?.setSpeed(speed);
   }, [speed]);
+
+  useEffect(() => {
+    if (caption) engineRef.current?.setCaption(caption);
+  }, [caption]);
 
   useImperativeHandle(
     ref,
