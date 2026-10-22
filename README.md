@@ -14,10 +14,25 @@ npm run dev      # http://localhost:3000
 | Route         | What it is                                                         |
 | ------------- | ------------------------------------------------------------------ |
 | `/`           | Onboarding form wired to the intro                                 |
-| `/dashboard`  | Placeholder page the intro hands off to                            |
-| `/playground` | Review tool: scrub, replay, play at 0.5× or 0.25×                  |
+| `/dashboard/` | Placeholder page the intro hands off to                            |
+| `/playground/` | Review tool: scrub, replay, play at 0.5× or 0.25×                 |
 
 In the demo, register number **0000000** makes the mock request fail, so you can see the error path.
+
+## Deploy to Cloudflare
+
+The app is a static export (`output: 'export'` in `next.config.ts`), so it needs no server.
+
+```bash
+npm run build    # writes the site to ./out
+```
+
+Then either:
+
+- **Dashboard upload:** Cloudflare → Workers & Pages → Create → Pages → Upload assets → name the project → drop the contents of `out/` (or a zip of them, with `index.html` at the root) → Deploy.
+- **CLI:** `npx wrangler pages deploy out --project-name m-corporate-onboarding`
+
+When the real backend is wired in, keep the request on the client (as `connectOrganization` does now), or move off static export if it needs server code.
 
 ## How the intro is driven
 

@@ -1,9 +1,10 @@
 import { Suspense } from 'react';
 import Link from 'next/link';
 import { MCorporateMark } from '@/components/m-corporate-intro/MCorporateMark';
+import { OrganizationLine } from './OrganizationLine';
 
 /** Placeholder for the real M corporate dashboard — the intro hands off here. */
-export default function DashboardPage({ searchParams }: PageProps<'/dashboard'>) {
+export default function DashboardPage() {
   return (
     <div className="mx-auto flex min-h-dvh w-full max-w-6xl flex-col gap-10 px-[max(16px,env(safe-area-inset-left))] pt-[calc(env(safe-area-inset-top)+16px)] pb-10 sm:px-8">
       <header className="flex items-center gap-2 text-lg font-semibold tracking-tight">
@@ -13,8 +14,8 @@ export default function DashboardPage({ searchParams }: PageProps<'/dashboard'>)
       <main className="grid max-w-xl animate-[fade-in_.6s_ease-out_both] gap-4">
         <p className="text-xs font-medium tracking-[0.08em] text-muted uppercase">Хянах самбар</p>
         <h1 className="text-4xl leading-tight font-semibold tracking-tight text-balance">Тавтай морил</h1>
-        <Suspense fallback={<p className="text-muted">Байгууллагын мэдээллийг ачаалж байна…</p>}>
-          <Organization searchParams={searchParams} />
+        <Suspense fallback={<p className="text-lg text-ink">Таны M corporate нээгдлээ.</p>}>
+          <OrganizationLine />
         </Suspense>
         <p className="leading-relaxed text-muted">
           Энэ бол жишээ хуудас. Бодит хувилбарт энд байгууллагын данс, төлбөр, цалин, зээлийн мэдээлэл харагдана.
@@ -24,21 +25,5 @@ export default function DashboardPage({ searchParams }: PageProps<'/dashboard'>)
         </Link>
       </main>
     </div>
-  );
-}
-
-async function Organization({ searchParams }: { searchParams: PageProps<'/dashboard'>['searchParams'] }) {
-  const { org } = await searchParams;
-  const register = typeof org === 'string' && /^\d{7}$/.test(org) ? org : null;
-  return (
-    <p className="text-lg text-ink">
-      {register ? (
-        <>
-          Регистр <span className="tabular-nums">{register}</span> бүхий байгууллагын M corporate нээгдлээ.
-        </>
-      ) : (
-        'Таны M corporate нээгдлээ.'
-      )}
-    </p>
   );
 }

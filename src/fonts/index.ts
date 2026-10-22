@@ -10,7 +10,6 @@ export const ttFirs = localFont({
     { path: './tt-firs-text/TT_Firs_Text_Normal.woff2', weight: '400', style: 'normal' },
     { path: './tt-firs-text/TT_Firs_Text_Medium.woff2', weight: '500', style: 'normal' },
     { path: './tt-firs-text/TT_Firs_Text_DemiBold.woff2', weight: '600', style: 'normal' },
-    { path: './tt-firs-text/TT_Firs_Text_Bold.woff2', weight: '700', style: 'normal' },
   ],
   variable: '--font-tt-firs',
   display: 'swap',
