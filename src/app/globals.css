@@ -1,26 +1,44 @@
 @import "tailwindcss";
 
+/*
+ * M corporate brand tokens. Colours come from m-bank.mn/corporate.
+ * The intro canvas reads the same variables, so changing a token here
+ * recolours both the UI and the animation.
+ */
+/* `static` keeps every token as a CSS variable even if no utility uses it — the canvas reads them at runtime. */
+@theme static {
+  --color-stage: #030504;
+  --color-ink: #f4f7f6;
+  --color-muted: #8a9097;
+  --color-line: #272b2e;
+  --color-surface: #0e1112;
+  --color-brand: #21cda8;
+  --color-brand-deep: #169b80;
+  --color-on-brand: #02130f;
+  --color-danger: #ff6b5e;
+
+  --font-sans: var(--font-tt-firs), ui-sans-serif, system-ui, sans-serif;
+  --font-mono: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace;
+}
+
 :root {
-  --background: #ffffff;
-  --foreground: #171717;
+  color-scheme: dark;
 }
 
-@theme inline {
-  --color-background: var(--background);
-  --color-foreground: var(--foreground);
-  --font-sans: var(--font-geist-sans);
-  --font-mono: var(--font-geist-mono);
+html,
+body {
+  height: 100%;
 }
 
-@media (prefers-color-scheme: dark) {
-  :root {
-    --background: #0a0a0a;
-    --foreground: #ededed;
+@keyframes fade-in {
+  from {
+    opacity: 0;
+    transform: translateY(8px);
   }
 }
 
 body {
-  background: var(--background);
-  color: var(--foreground);
-  font-family: Arial, Helvetica, sans-serif;
+  background: var(--color-stage);
+  color: var(--color-ink);
+  -webkit-font-smoothing: antialiased;
 }
