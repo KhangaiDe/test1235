@@ -68,11 +68,14 @@ People with **reduce motion** turned on skip straight to the end of each phase. 
 
 ## Deploy to Cloudflare
 
+Live at **https://still-frog-528a.khangai-de.workers.dev**, a Cloudflare Worker that serves the static export (`wrangler.jsonc`).
+
 ```bash
-npm run build    # static site in ./out
+npx wrangler login   # once per computer, opens the browser
+npm run deploy       # next build + wrangler deploy
 ```
 
-Cloudflare → Workers & Pages → Create → Pages → Upload assets → drop the contents of `out/` (or a zip with `index.html` at the root) → Deploy. Or run `npx wrangler pages deploy out --project-name m-corporate`.
+In CI, set `CLOUDFLARE_API_TOKEN` (permission: Account → Workers Scripts → Edit) instead of logging in.
 
 ## Font
 

@@ -1,0 +1,15 @@
+// Cloudflare Worker that serves the static export in ./out.
+// Deploy: `npm run deploy` (needs `npx wrangler login` once, or CLOUDFLARE_API_TOKEN).
+{
+  "$schema": "node_modules/wrangler/config-schema.json",
+  "name": "still-frog-528a",
+  "account_id": "6aa82ebe1e7dfd8fb8504ea052a21fea",
+  "compatibility_date": "2026-10-22",
+  "workers_dev": true,
+  "preview_urls": false,
+  "assets": {
+    "directory": "./out",
+    "html_handling": "auto-trailing-slash",
+    "not_found_handling": "404-page"
+  }
+}
