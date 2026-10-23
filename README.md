@@ -18,6 +18,7 @@ npm run dev      # http://localhost:3000
 | `/`            | Login: brand panel with the live star field, organisation / M Sign tabs    |
 | `/home/`       | Internet bank home: registration verification, DAN welcome, session timer  |
 | `/playground/` | Review tool for the intro: scrub, replay, play at 0.5× or 0.25×            |
+| `/home/` → **Business hub** | Coking Coal and USD/MNT monitors, reloaded on every click     |
 
 ### Test accounts (prototype only)
 
@@ -80,3 +81,13 @@ In CI, set `CLOUDFLARE_API_TOKEN` (permission: Account → Workers Scripts → E
 ## Font
 
 TT Firs Text (Normal, Medium, DemiBold) via `next/font/local` in `src/fonts`.
+
+
+## Business hub
+
+"Business hub" in the side menu (`src/features/home/data.ts`) opens `src/features/hub/BusinessHub.tsx`: two tabs, Coking coal and USD/MNT, each an iframe of a self-contained report page.
+
+- Every click on "Business hub", and the "Шинэчлэх" button, reloads both reports with a fresh `?v=<timestamp>`, so nobody sees a cached copy. The tab shows the run date read from the report itself.
+- The reports live in `public/hub/coal.html` and `public/hub/fx.html`. To publish a new run, replace those two files and `npm run deploy`.
+- `worker/index.ts` runs in front of `/hub/*` only and sends `Cache-Control: no-store`. If the `HUB_SOURCE` variable is set (in `wrangler.jsonc` → `vars`, or the Cloudflare dashboard), it fetches `HUB_SOURCE/coal.html` and `HUB_SOURCE/fx.html` on every request instead, so new runs appear without a redeploy. It falls back to the bundled copy if that fetch fails. The response header `X-Hub-Source` says which one was served.
+- Add another report: put the HTML in `public/hub/`, add it to `src/features/hub/reports.ts`, and add its name to `REPORTS` in `worker/index.ts`.

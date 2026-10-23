@@ -11,10 +11,12 @@ export interface SidebarProps {
   org: Organization;
   locked: boolean;
   query: string;
+  /** id of the page currently shown */
+  activeId: string;
   onNavigate: (item: MenuItem) => void;
 }
 
-export function Sidebar({ org, locked, query, onNavigate }: SidebarProps) {
+export function Sidebar({ org, locked, query, activeId, onNavigate }: SidebarProps) {
   const q = query.trim().toLowerCase();
   const match = (i: MenuItem) => !q || i.label.toLowerCase().includes(q);
   const main = MAIN_MENU.filter(match);
@@ -35,8 +37,8 @@ export function Sidebar({ org, locked, query, onNavigate }: SidebarProps) {
         </span>
       </div>
 
-      <Group title="Үндсэн цэс" items={main} locked={locked} onNavigate={onNavigate} />
-      {forYou.length ? <Group title="Танд" items={forYou} locked={locked} onNavigate={onNavigate} /> : null}
+      <Group title="Үндсэн цэс" items={main} locked={locked} activeId={activeId} onNavigate={onNavigate} />
+      {forYou.length ? <Group title="Танд" items={forYou} locked={locked} activeId={activeId} onNavigate={onNavigate} /> : null}
       {!main.length && !forYou.length ? <p className="px-3 text-sm text-fg-muted">Илэрц олдсонгүй</p> : null}
 
       <div className="mt-auto">
@@ -46,14 +48,26 @@ export function Sidebar({ org, locked, query, onNavigate }: SidebarProps) {
   );
 }
 
-function Group({ title, items, locked, onNavigate }: { title: string; items: readonly MenuItem[]; locked: boolean; onNavigate: (i: MenuItem) => void }) {
+function Group({
+  title,
+  items,
+  locked,
+  activeId,
+  onNavigate,
+}: {
+  title: string;
+  items: readonly MenuItem[];
+  locked: boolean;
+  activeId: string;
+  onNavigate: (i: MenuItem) => void;
+}) {
   return (
     <div className="grid gap-0.5">
       <p className="px-3 pb-1 text-xs text-fg-muted">{title}</p>
       <ul className="grid gap-0.5">
         {items.map((item) => (
           <li key={item.id}>
-            <Item item={item} locked={locked && item.needsVerification} active={item.id === 'home'} onNavigate={onNavigate} />
+            <Item item={item} locked={locked && item.needsVerification} active={item.id === activeId} onNavigate={onNavigate} />
           </li>
         ))}
       </ul>

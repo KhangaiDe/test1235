@@ -5,6 +5,7 @@ import {
   FileText,
   Globe,
   House,
+  LayoutDashboard,
   Landmark,
   MapPin,
   MessageSquareHeart,
@@ -30,6 +31,7 @@ export interface MenuItem {
 
 export const MAIN_MENU: readonly MenuItem[] = [
   { id: 'home', label: 'Нүүр', icon: House, needsVerification: false },
+  { id: 'hub', label: 'Business hub', icon: LayoutDashboard, needsVerification: false },
   { id: 'transfer', label: 'Шилжүүлэг', icon: ArrowLeftRight, needsVerification: true },
   { id: 'foreign', label: 'Гадаад шилжүүлэг', icon: Globe, needsVerification: true },
   { id: 'payment', label: 'Төлбөр', icon: Receipt, needsVerification: true },

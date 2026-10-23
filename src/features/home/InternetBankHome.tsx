@@ -13,6 +13,7 @@ import { SessionTimer } from './SessionTimer';
 import { VerificationCard } from './VerificationCard';
 import { PromoCard } from './PromoCard';
 import { DanWelcomeModal } from './DanWelcomeModal';
+import { BusinessHub } from '@/features/hub/BusinessHub';
 
 const SESSION_KEY = 'mcorp.session';
 const noopSubscribe = () => () => {};
@@ -52,6 +53,9 @@ function Home({ session }: { session: Session }) {
   const [query, setQuery] = useState('');
   const [drawer, setDrawer] = useState(false);
   const [toast, setToast] = useState<string | null>(null);
+  const [view, setView] = useState<'home' | 'hub'>('home');
+  // Bumped on every "Business hub" click; used as the hub's key so each click reloads the reports.
+  const [hubLoads, setHubLoads] = useState(0);
   const [filled, setFilled] = useState<ReadonlySet<string>>(
     () =>
       new Set(
@@ -88,10 +92,14 @@ function Home({ session }: { session: Session }) {
 
   function navigate(item: MenuItem) {
     setDrawer(false);
-    if (item.id !== 'home') setToast(`«${item.label}» туршилтын хувилбарт ороогүй`);
+    if (item.id === 'home') setView('home');
+    else if (item.id === 'hub') {
+      setView('hub');
+      setHubLoads((n) => n + 1);
+    } else setToast(`«${item.label}» туршилтын хувилбарт ороогүй`);
   }
 
-  const sidebar = <Sidebar org={session.org} locked={locked} query={query} onNavigate={navigate} />;
+  const sidebar = <Sidebar org={session.org} locked={locked} query={query} activeId={view} onNavigate={navigate} />;
 
   return (
     <div className="min-h-dvh bg-app lg:grid lg:grid-cols-[272px_1fr]">
@@ -154,6 +162,11 @@ function Home({ session }: { session: Session }) {
           </button>
         </header>
 
+        {view === 'hub' ? (
+          <main className="px-[max(16px,env(safe-area-inset-left))] py-6 sm:px-6">
+            <BusinessHub key={hubLoads} />
+          </main>
+        ) : (
         <main className="grid gap-6 px-[max(16px,env(safe-area-inset-left))] py-6 sm:px-6 xl:grid-cols-[minmax(0,1fr)_330px] xl:items-start">
           <div className="grid min-w-0 animate-[fade-in_.6s_ease-out_both] gap-6 [animation-delay:150ms]">
             <p className="text-sm text-fg-muted">
@@ -165,6 +178,7 @@ function Home({ session }: { session: Session }) {
             <PromoCard />
           </div>
         </main>
+        )}
       </div>
 
       <DanWelcomeModal open={danOpen} onClose={() => setDanOpen(false)} onConnectDan={connectDan} />
