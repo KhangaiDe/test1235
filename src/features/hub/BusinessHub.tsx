@@ -3,6 +3,7 @@
 import { useCallback, useRef, useState } from 'react';
 import Link from 'next/link';
 import { BadgeCheck, ExternalLink, Lock, RefreshCw } from 'lucide-react';
+import { hideSources } from './hideSources';
 import { HUB_REPORTS, type HubReport } from './reports';
 import { PLAN, cancelSubscription, formatDate, formatMnt, isActive, readSubscription, type Subscription } from './subscription';
 
@@ -91,7 +92,7 @@ export function BusinessHub({ username }: BusinessHubProps) {
         <div className="flex items-center gap-2">
           {locked ? null : (
           <a
-            href={`${current.src}?v=${stamp}`}
+            href={`/report/?id=${current.id}`}
             target="_blank"
             rel="noopener"
             className="inline-flex h-10 items-center gap-2 rounded-xl border border-hairline bg-page px-3 text-sm hover:bg-field focus-visible:outline-2 focus-visible:outline-fg"
@@ -156,6 +157,7 @@ export function BusinessHub({ username }: BusinessHubProps) {
             src={`${r.src}?v=${stamp}`}
             title={r.label}
             onLoad={() => {
+              hideSources(frames.current[r.id]);
               setLoading((l) => ({ ...l, [r.id]: false }));
               setRunDates((d) => ({ ...d, [r.id]: readRunDate(frames.current[r.id], r.stateId) }));
             }}
@@ -189,7 +191,7 @@ function Paywall() {
       <div className="grid max-w-md gap-2">
         <h2 className="text-lg font-semibold tracking-tight">Үргэлжлүүлэн уншихын тулд захиална уу</h2>
         <p className="text-sm text-balance text-fg-muted">
-          Коксжих нүүрс болон USD/MNT ханшийн тайлангийн бүрэн хувилбар: дүгнэлт, график, дохионы хүснэгт, эх сурвалж.
+          Коксжих нүүрс болон USD/MNT ханшийн тайлангийн бүрэн хувилбар: дүгнэлт, график, дохионы хүснэгт.
           Тайлан тогтмол шинэчлэгдэнэ.
         </p>
       </div>

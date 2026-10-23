@@ -232,7 +232,7 @@ function CheckoutForm({ session }: { session: Session }) {
             <p className="text-sm text-fg-muted">Коксжих нүүрс · USD/MNT ханшийн тайлан</p>
           </div>
           <ul className="grid gap-2 text-sm">
-            {['Тайлангийн бүрэн хувилбар', 'График, дохионы хүснэгт, эх сурвалж', 'Шинэ тайлан гарах бүрд шууд нээгдэнэ'].map((t) => (
+            {['Тайлангийн бүрэн хувилбар', 'График, дохионы хүснэгт', 'Шинэ тайлан гарах бүрд шууд нээгдэнэ'].map((t) => (
               <li key={t} className="flex items-start gap-2">
                 <Check aria-hidden className="mt-0.5 size-4 shrink-0 text-ok" />
                 {t}

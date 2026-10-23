@@ -25,7 +25,8 @@ export interface Subscription {
   reference: string;
 }
 
-const key = (username: string) => `mcorp.hub.subscription.${username}`;
+const PREFIX = 'mcorp.hub.subscription.';
+const key = (username: string) => `${PREFIX}${username}`;
 
 export function readSubscription(username: string): Subscription | null {
   try {
@@ -67,6 +68,38 @@ export function cancelSubscription(username: string) {
     window.localStorage.removeItem(key(username));
   } catch {
     // ignore
+  }
+}
+
+/** Every demo subscription stored in this browser, for any login name. */
+export function listSubscriptions(): Subscription[] {
+  const out: Subscription[] = [];
+  try {
+    const store = window.localStorage;
+    for (let i = 0; i < store.length; i++) {
+      const k = store.key(i);
+      if (!k?.startsWith(PREFIX)) continue;
+      try {
+        out.push(JSON.parse(store.getItem(k) ?? '') as Subscription);
+      } catch {
+        // unreadable entry; resetAllSubscriptions still removes it
+      }
+    }
+  } catch {
+    // storage blocked
+  }
+  return out;
+}
+
+/** Demo reset: removes every stored subscription so the paywall shows again for everyone. Returns how many were removed. */
+export function resetAllSubscriptions(): number {
+  try {
+    const store = window.localStorage;
+    const keys = Array.from({ length: store.length }, (_, i) => store.key(i)).filter((k): k is string => !!k?.startsWith(PREFIX));
+    keys.forEach((k) => store.removeItem(k));
+    return keys.length;
+  } catch {
+    return 0;
   }
 }
 
