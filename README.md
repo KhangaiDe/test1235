@@ -19,6 +19,7 @@ npm run dev      # http://localhost:3000
 | `/home/`       | Internet bank home: registration verification, DAN welcome, session timer  |
 | `/playground/` | Review tool for the intro: scrub, replay, play at 0.5× or 0.25×            |
 | `/home/` → **Business hub** | Coking Coal and USD/MNT monitors, reloaded on every click     |
+| `/subscribe/`  | Business hub checkout (demo payment, ₮99,000 a month)                      |
 
 ### Test accounts (prototype only)
 
@@ -91,3 +92,9 @@ TT Firs Text (Normal, Medium, DemiBold) via `next/font/local` in `src/fonts`.
 - The reports live in `public/hub/coal.html` and `public/hub/fx.html`. To publish a new run, replace those two files and `npm run deploy`.
 - `worker/index.ts` runs in front of `/hub/*` only and sends `Cache-Control: no-store`. If the `HUB_SOURCE` variable is set (in `wrangler.jsonc` → `vars`, or the Cloudflare dashboard), it fetches `HUB_SOURCE/coal.html` and `HUB_SOURCE/fx.html` on every request instead, so new runs appear without a redeploy. It falls back to the bundled copy if that fetch fails. The response header `X-Hub-Source` says which one was served.
 - Add another report: put the HTML in `public/hub/`, add it to `src/features/hub/reports.ts`, and add its name to `REPORTS` in `worker/index.ts`.
+
+### Subscription (demo paywall)
+
+Without a subscription, Business hub shows each report's title, headline and score tiles, then fades into a Subscribe box (Substack-style). "Захиалах" opens `/subscribe/`: pay from an organisation account, the M corporate Credit Card or QPay, then the receipt links back to `/home/?view=hub` with everything unlocked for one month. "Цуцлах (туршилт)" next to the status badge resets it.
+
+This is a **demo**: no money moves and the subscription is stored in the browser (`localStorage`, per login name), in `src/features/hub/subscription.ts`. The price is `PLAN.priceMnt` there. For real payments, connect a payment gateway (QPay, the bank's card gateway or Stripe) and have `worker/index.ts` check a signed subscription cookie before serving `/hub/*.html`; otherwise the reports can be opened directly by URL.

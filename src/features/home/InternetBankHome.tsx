@@ -53,7 +53,10 @@ function Home({ session }: { session: Session }) {
   const [query, setQuery] = useState('');
   const [drawer, setDrawer] = useState(false);
   const [toast, setToast] = useState<string | null>(null);
-  const [view, setView] = useState<'home' | 'hub'>('home');
+  // `/home/?view=hub` (used after the subscription checkout) opens Business hub directly.
+  const [view, setView] = useState<'home' | 'hub'>(() =>
+    new URLSearchParams(window.location.search).get('view') === 'hub' ? 'hub' : 'home',
+  );
   // Bumped on every "Business hub" click; used as the hub's key so each click reloads the reports.
   const [hubLoads, setHubLoads] = useState(0);
   const [filled, setFilled] = useState<ReadonlySet<string>>(
@@ -164,7 +167,7 @@ function Home({ session }: { session: Session }) {
 
         {view === 'hub' ? (
           <main className="px-[max(16px,env(safe-area-inset-left))] py-6 sm:px-6">
-            <BusinessHub key={hubLoads} />
+            <BusinessHub key={hubLoads} username={session.username} />
           </main>
         ) : (
         <main className="grid gap-6 px-[max(16px,env(safe-area-inset-left))] py-6 sm:px-6 xl:grid-cols-[minmax(0,1fr)_330px] xl:items-start">

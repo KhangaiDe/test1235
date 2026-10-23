@@ -10,9 +10,11 @@ export interface HubReport {
   src: string;
   /** id of the <script type="application/json"> that holds the report's runs */
   stateId: string;
+  /** Pixels of the report shown free (title, headline, score tiles) before the paywall. */
+  previewHeight: number;
 }
 
 export const HUB_REPORTS: readonly HubReport[] = [
-  { id: 'coal', label: 'Coking coal', hint: 'Нүүрс тээвэр, хөрс хуулалт', src: '/hub/coal.html', stateId: 'coal-state' },
-  { id: 'fx', label: 'USD/MNT', hint: 'Ханшийн эрсдэл', src: '/hub/fx.html', stateId: 'fx-state' },
+  { id: 'coal', label: 'Coking coal', hint: 'Нүүрс тээвэр, хөрс хуулалт', src: '/hub/coal.html', stateId: 'coal-state', previewHeight: 640 },
+  { id: 'fx', label: 'USD/MNT', hint: 'Ханшийн эрсдэл', src: '/hub/fx.html', stateId: 'fx-state', previewHeight: 600 },
 ];
