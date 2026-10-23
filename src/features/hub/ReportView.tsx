@@ -1,23 +1,36 @@
 'use client';
 
-import { useRef, useState, useSyncExternalStore } from 'react';
+import { useEffect, useRef, useState, useSyncExternalStore } from 'react';
 import { ArrowLeft } from 'lucide-react';
 import { hideSources } from './hideSources';
 import { HUB_REPORTS } from './reports';
+import { ModeToggle, applyMode, readMode, type ReportMode } from './shortView';
 
 const noopSubscribe = () => () => {};
 const readId = () => new URLSearchParams(window.location.search).get('id');
+// The hub passes its current mode; otherwise fall back to the remembered one.
+const readStartMode = (): ReportMode => {
+  const m = new URLSearchParams(window.location.search).get('mode');
+  return m === 'short' || m === 'long' ? m : readMode();
+};
 
 /**
- * Full-window view of one report (`/report/?id=coal`), opened by "Шинэ цонхонд".
+ * Full-window view of one report (`/report/?id=coal&mode=short`), opened by "Шинэ цонхонд".
  * It goes through the hub's iframe instead of linking /hub/*.html directly, so
  * sources stay hidden here too.
  */
 export function ReportView() {
+  // undefined while prerendering: the static export has no URL to read.
   const id = useSyncExternalStore(noopSubscribe, readId, () => undefined);
+  if (id === undefined) return <div className="min-h-dvh bg-app" />;
+  return <ReportFrame id={id} />;
+}
+
+function ReportFrame({ id }: { id: string | null }) {
   const frame = useRef<HTMLIFrameElement | null>(null);
   const [stamp] = useState(() => Date.now());
-  if (id === undefined) return <div className="min-h-dvh bg-app" />;
+  const [mode, setMode] = useState<ReportMode>(readStartMode);
+  useEffect(() => applyMode(frame.current, mode), [mode]);
   const report = HUB_REPORTS.find((r) => r.id === id) ?? HUB_REPORTS[0];
 
   return (
@@ -31,12 +44,18 @@ export function ReportView() {
           Business hub
         </a>
         <span className="truncate text-sm font-medium">{report.label}</span>
+        <div className="ml-auto">
+          <ModeToggle mode={mode} onChange={setMode} />
+        </div>
       </header>
       <iframe
         ref={frame}
         src={`${report.src}?v=${stamp}`}
         title={report.label}
-        onLoad={() => hideSources(frame.current)}
+        onLoad={() => {
+          hideSources(frame.current);
+          applyMode(frame.current, mode);
+        }}
         className="block w-full flex-1"
       />
     </div>
