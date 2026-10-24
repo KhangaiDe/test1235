@@ -5,11 +5,15 @@ import { ArrowLeft } from 'lucide-react';
 import { hideSources } from './hideSources';
 import { fmtRunDate } from './reportData';
 import { HUB_REPORTS } from './reports';
-import { ModeToggle, applyMode, readMode, type ReportMode } from './shortView';
+import { LangToggle, ModeToggle, applyMode, readLang, readMode, type ReportLang, type ReportMode } from './shortView';
 
 const noopSubscribe = () => () => {};
 const readId = () => new URLSearchParams(window.location.search).get('id');
 const readRun = () => new URLSearchParams(window.location.search).get('run');
+const readStartLang = (): ReportLang => {
+  const l = new URLSearchParams(window.location.search).get('lang');
+  return l === 'mn' || l === 'en' ? l : readLang();
+};
 // The hub passes its current mode; otherwise fall back to the remembered one.
 const readStartMode = (): ReportMode => {
   const m = new URLSearchParams(window.location.search).get('mode');
@@ -33,6 +37,7 @@ function ReportFrame({ id }: { id: string | null }) {
   const [stamp] = useState(() => Date.now());
   const [run] = useState(readRun);
   const [mode, setMode] = useState<ReportMode>(readStartMode);
+  const [lang, setLang] = useState<ReportLang>(readStartLang);
   useEffect(() => applyMode(frame.current, mode), [mode]);
   const report = HUB_REPORTS.find((r) => r.id === id) ?? HUB_REPORTS[0];
 
@@ -50,13 +55,15 @@ function ReportFrame({ id }: { id: string | null }) {
           {report.label}
           {run ? ` · ${fmtRunDate(run)}` : ''}
         </span>
-        <div className="ml-auto">
+        <div className="ml-auto flex items-center gap-2">
+          <LangToggle lang={lang} onChange={setLang} />
           <ModeToggle mode={mode} onChange={setMode} />
         </div>
       </header>
       <iframe
         ref={frame}
-        src={`${report.src}?${run ? `run=${run}&` : ''}v=${stamp}`}
+        key={lang}
+        src={`${report.src}?${run ? `run=${run}&` : ''}lang=${lang}&v=${stamp}`}
         title={report.label}
         onLoad={() => {
           hideSources(frame.current);

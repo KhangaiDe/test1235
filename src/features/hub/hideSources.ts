@@ -7,8 +7,9 @@
  * copies the Worker fetches from HUB_SOURCE. The report pages build their DOM
  * in an inline script, which has run by the time the iframe fires `load`.
  */
-const SOURCE_SECTION = /^sources?$/i;
-const SOURCE_COLUMN = /^(sources?|link)$/i;
+// English and Mongolian (?lang=mn) headings.
+const SOURCE_SECTION = /^(sources?|эх сурвалж)$/i;
+const SOURCE_COLUMN = /^(sources?|link|эх сурвалж|холбоос)$/i;
 
 export function hideSources(frame: HTMLIFrameElement | null) {
   let doc: Document | null | undefined;

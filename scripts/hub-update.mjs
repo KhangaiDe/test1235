@@ -275,6 +275,26 @@ const PROBS = [
   [80, { A: 40, B: 35, C: 25 }],
   [100, { A: 20, B: 40, C: 40 }],
 ];
+const changeWordMn = (prev, now) =>
+  prev.na && !now.na ? `одоо ажиглагдсан, ${['ногоон', 'шар', 'улаан'][now.score]} (өмнө өгөгдөлгүй)` : now.score === prev.score ? 'өөрчлөлтгүй' : now.score < prev.score ? `сайжирсан (өмнө ${prev.score})` : `муудсан (өмнө ${prev.score})`;
+/**
+ * The new run starts as a copy of the previous one, Mongolian (*_mn) fields included.
+ * Wherever the English changed but its *_mn copy did not, the copy is stale: drop it,
+ * so the page falls back to English and `check:hub` asks for a new translation.
+ */
+function dropStaleMn(prev, now) {
+  if (!prev || typeof now !== 'object' || now === null) return;
+  if (Array.isArray(now)) {
+    now.forEach((x, i) => dropStaleMn(Array.isArray(prev) ? prev[i] : undefined, x));
+    return;
+  }
+  for (const k of Object.keys(now)) {
+    if (k.endsWith('_mn')) continue;
+    const mk = `${k}_mn`;
+    if (mk in now && JSON.stringify(now[k]) !== JSON.stringify(prev[k]) && JSON.stringify(now[mk]) === JSON.stringify(prev[mk])) delete now[mk];
+    dropStaleMn(prev[k], now[k]);
+  }
+}
 const changeWord = (prev, now) =>
   prev.na && !now.na ? `now observed, ${['green', 'amber', 'red'][now.score]} (was n/a)` : now.score === prev.score ? 'no change' : now.score < prev.score ? `better (was ${prev.score})` : `worse (was ${prev.score})`;
 
@@ -408,6 +428,7 @@ if (dce) {
           note: `ECB reference rate. ${cnyBase.v.toFixed(4)} on ${dShort(cnyBase.d)} (${pct((cnyNow.v / cnyBase.v - 1) * 100)}).`,
         });
     }
+    dropStaleMn(prev, run);
     st.runs.push(run);
     st.series.score_history.push({ d: TODAY, haulage: run.haulage_score, overburden: run.overburden_score });
     note(`Coal: haulage ${run.haulage_score} ${run.haulage_band} (${run.change_haulage >= 0 ? '+' : ''}${run.change_haulage}), overburden ${run.overburden_score} ${run.overburden_band} (${run.change_overburden >= 0 ? '+' : ''}${run.change_overburden}); points ${JSON.stringify(pts)}`);
@@ -543,6 +564,8 @@ if (dce) {
       }
     }
     run.alert = run.alerts.some((al) => al.triggered);
+    dropStaleMn(prev, run);
+    for (const s of run.signals) s.change_mn = changeWordMn(prevSig[s.id] ?? s, s);
     st.runs.push(run);
     st.updated = TODAY;
     st.index_history.push({ date: TODAY, index: run.index, band: run.band, pA: run.probs.A, pB: run.probs.B, pC: run.probs.C });

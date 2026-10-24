@@ -7,7 +7,7 @@ import { CoalArt, FxArt } from './HubArt';
 import { hideSources } from './hideSources';
 import { fmtRunDate, loadRuns, type Band, type RunScore, type RunSummary } from './reportData';
 import { HUB_REPORTS, type HubReport } from './reports';
-import { ModeToggle, applyMode, readMode, type ReportMode } from './shortView';
+import { LangToggle, ModeToggle, applyMode, readLang, readMode, type ReportLang, type ReportMode } from './shortView';
 import { PLAN, cancelSubscription, formatDate, formatMnt, isActive, readSubscription, type Subscription } from './subscription';
 
 const ART: Record<HubReport['id'], ComponentType<{ className?: string }>> = { coal: CoalArt, fx: FxArt };
@@ -37,6 +37,7 @@ export function BusinessHub({ username }: BusinessHubProps) {
   const [stamp, setStamp] = useState(() => Date.now());
   const [runs, setRuns] = useState<Runs>({});
   const [mode, setMode] = useState<ReportMode>(readMode);
+  const [lang, setLang] = useState<ReportLang>(readLang);
 
   useEffect(() => {
     let alive = true;
@@ -109,6 +110,7 @@ export function BusinessHub({ username }: BusinessHubProps) {
           report={report}
           runs={runs[report.id]}
           locked={locked}
+          lang={lang}
           onBack={() => setView({ kind: 'cards' })}
           onOpen={(date) => setView({ kind: 'run', id: report.id, date })}
         />
@@ -116,7 +118,7 @@ export function BusinessHub({ username }: BusinessHubProps) {
 
       {view.kind === 'run' && report ? (
         <RunReader
-          key={`${report.id}-${view.date}-${stamp}`}
+          key={`${report.id}-${view.date}-${stamp}-${lang}`}
           report={report}
           date={view.date}
           latest={Array.isArray(runs[report.id]) && (runs[report.id] as RunSummary[])[0]?.date === view.date}
@@ -124,6 +126,8 @@ export function BusinessHub({ username }: BusinessHubProps) {
           locked={locked}
           mode={mode}
           onModeChange={setMode}
+          lang={lang}
+          onLangChange={setLang}
           onBack={() => setView({ kind: 'history', id: report.id })}
         />
       ) : null}
@@ -201,12 +205,14 @@ function RunHistory({
   report,
   runs,
   locked,
+  lang,
   onBack,
   onOpen,
 }: {
   report: HubReport;
   runs: RunSummary[] | 'error' | undefined;
   locked: boolean;
+  lang: ReportLang;
   onBack: () => void;
   onOpen: (date: string) => void;
 }) {
@@ -259,7 +265,7 @@ function RunHistory({
                         <ScoreChip key={s.label} score={s} />
                       ))}
                     </span>
-                    <span className="line-clamp-2 text-sm text-fg-muted">{run.lead}</span>
+                    <span className="line-clamp-2 text-sm text-fg-muted">{(lang === 'mn' && run.leadMn) || run.lead}</span>
                   </span>
                   <ChevronRight aria-hidden className="size-5 shrink-0 text-fg-muted transition group-hover:translate-x-0.5" />
                 </button>
@@ -280,6 +286,8 @@ function RunReader({
   locked,
   mode,
   onModeChange,
+  lang,
+  onLangChange,
   onBack,
 }: {
   report: HubReport;
@@ -289,6 +297,8 @@ function RunReader({
   locked: boolean;
   mode: ReportMode;
   onModeChange: (mode: ReportMode) => void;
+  lang: ReportLang;
+  onLangChange: (lang: ReportLang) => void;
   onBack: () => void;
 }) {
   const frame = useRef<HTMLIFrameElement | null>(null);
@@ -308,11 +318,12 @@ function RunReader({
             {latest ? <span className="ml-2 align-middle text-xs font-normal text-fg-muted">сүүлийн тайлан</span> : null}
           </h2>
         </div>
-        {locked ? null : (
-          <div className="flex flex-wrap items-center gap-2">
-            <ModeToggle mode={mode} onChange={onModeChange} />
+        <div className="flex flex-wrap items-center gap-2">
+          <LangToggle lang={lang} onChange={onLangChange} />
+          {locked ? null : <ModeToggle mode={mode} onChange={onModeChange} />}
+          {locked ? null : (
             <a
-              href={`/report/?id=${report.id}&run=${date}&mode=${mode}`}
+              href={`/report/?id=${report.id}&run=${date}&mode=${mode}&lang=${lang}`}
               target="_blank"
               rel="noopener"
               className="inline-flex h-10 items-center gap-2 rounded-xl border border-hairline bg-page px-3 text-sm hover:bg-field focus-visible:outline-2 focus-visible:outline-fg"
@@ -320,15 +331,15 @@ function RunReader({
               <ExternalLink aria-hidden className="size-4" />
               <span className="max-sm:sr-only">Шинэ цонхонд</span>
             </a>
-          </div>
-        )}
+          )}
+        </div>
       </div>
 
       <div className="relative overflow-hidden rounded-2xl border border-hairline bg-page">
         <div className={locked ? 'pointer-events-none relative overflow-hidden' : undefined} style={locked ? { height: report.previewHeight } : undefined}>
           <iframe
             ref={frame}
-            src={`${report.src}?run=${date}&v=${stamp}`}
+            src={`${report.src}?run=${date}&lang=${lang}&v=${stamp}`}
             title={`${report.label}, ${fmtRunDate(date)}`}
             onLoad={() => {
               hideSources(frame.current);
