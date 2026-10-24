@@ -87,9 +87,13 @@ TT Firs Text (Normal, Medium, DemiBold) via `next/font/local` in `src/fonts`.
 
 ## Business hub
 
-"Business hub" in the side menu (`src/features/home/data.ts`) opens `src/features/hub/BusinessHub.tsx`: two tabs, Coking coal and USD/MNT, each an iframe of a self-contained report page.
+"Business hub" in the side menu (`src/features/home/data.ts`) opens `src/features/hub/BusinessHub.tsx` in three levels:
 
-- Every click on "Business hub", and the "Шинэчлэх" button, reloads both reports with a fresh `?v=<timestamp>`, so nobody sees a cached copy. The tab shows the run date read from the report itself.
+1. Two cards, Coking coal and USD/MNT (illustrations in `src/features/hub/HubArt.tsx`), each with a description, the latest scores and the number of reports.
+2. Clicking a card lists that report's runs by date, newest first, with each run's scores and headline (`src/features/hub/reportData.ts` reads them from the report file).
+3. Clicking a run opens it in the short view ("Товч"), with "Дэлгэрэнгүй" for the full report. Each report page takes `?run=YYYY-MM-DD` to show an earlier run as published, with a note that charts and logs run to the latest date.
+
+- Every click on "Business hub", and the "Шинэчлэх" button, reloads the reports with a fresh `?v=<timestamp>`, so nobody sees a cached copy.
 - The reports live in `public/hub/coal.html` and `public/hub/fx.html`. To publish a new run, replace those two files and `npm run deploy`.
 - `worker/index.ts` runs in front of `/hub/*` only and sends `Cache-Control: no-store`. If the `HUB_SOURCE` variable is set (in `wrangler.jsonc` → `vars`, or the Cloudflare dashboard), it fetches `HUB_SOURCE/coal.html` and `HUB_SOURCE/fx.html` on every request instead, so new runs appear without a redeploy. It falls back to the bundled copy if that fetch fails. The response header `X-Hub-Source` says which one was served.
 - "Товч / Дэлгэрэнгүй" switches each report between a short view (title, scores and the first four highlights cut to their lead sentence, about one screen) and the full report. Short is the default; the choice is remembered in the browser. The short view only hides parts of the page (`src/features/hub/shortView.tsx`), so it works for any new run that keeps the same layout.

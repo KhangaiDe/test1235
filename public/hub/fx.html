@@ -39,6 +39,7 @@ h1{font-size:30px;line-height:1.1}
 h2{font-size:21px;line-height:1.2;padding-bottom:8px;border-bottom:1px solid var(--axis)}
 h3{font-size:16px;line-height:1.25}
 p{margin:0}
+.archived{border:1px solid var(--border);background:color-mix(in srgb,var(--warn) 14%,var(--surface));border-radius:6px;padding:8px 12px;font-size:13px;color:var(--ink2);margin:0 0 12px;max-width:90ch}
 .eyebrow{font-family:var(--cond);font-weight:500;font-size:12.5px;letter-spacing:.09em;text-transform:uppercase;color:var(--muted)}
 .sub{color:var(--ink2);font-size:13.5px}
 .small{font-size:13px;color:var(--ink2)}
@@ -136,7 +137,9 @@ footer{color:var(--muted);font-size:12.5px}
 (function(){
 "use strict";
 var S=JSON.parse(document.getElementById("fx-state").textContent);
-var R=S.runs[S.runs.length-1], PREV=S.runs.length>1?S.runs[S.runs.length-2]:null;
+// ?run=YYYY-MM-DD shows an earlier run as published; the default is the newest.
+var WANT=new URLSearchParams(location.search).get("run"),RI=S.runs.map(function(r){return r.run_date;}).lastIndexOf(WANT);if(RI<0)RI=S.runs.length-1;
+var R=S.runs[RI], PREV=RI>0?S.runs[RI-1]:null, LATEST=S.runs[S.runs.length-1];
 var app=document.getElementById("app");
 var NS="http://www.w3.org/2000/svg";
 
@@ -203,7 +206,8 @@ function sec(title,sub){var x=h("section",null,h("h2",{text:title}));if(sub)x.ap
       h("dt",{text:"Official rate, "+dLong(R.official_rate_date)}),h("dd",{text:f2(R.official_rate)}),
       h("dt",{text:"Expected, "+dLong(last.target)}),h("dd",{text:f0(last.expected)}),
       h("dt",{text:"P90 (path "+R.p90_path+"), "+dLong(last.target)}),h("dd",{text:f0(last.p90)})));
-  app.appendChild(h("section",null,head,h("div",{class:"ledger"},c1,c2,c3)));
+  var arch=R===LATEST?null:h("p",{class:"archived"},h("b",{text:"Archived run of "+dLong(R.run_date)+". "}),"Scores, signals and text are as published that day; charts, logs and the track record include data up to "+dLong(LATEST.run_date)+".");
+  app.appendChild(h("section",null,head,arch,h("div",{class:"ledger"},c1,c2,c3)));
 })();
 
 /* ---------- highlights ---------- */
