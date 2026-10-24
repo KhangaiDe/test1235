@@ -52,6 +52,10 @@ for (const { file, stateId } of REPORTS) {
     if (missing.length) fail(file, `newest run (${last.run_date}) is missing fields: ${missing.join(', ')}`);
   }
   if (!last.highlights?.length) fail(file, 'newest run has no highlights');
+  // scripts/hub-update.mjs copies the text forward; it must be rewritten before publishing.
+  if (prev && JSON.stringify(last.highlights) === JSON.stringify(prev.highlights))
+    fail(file, `highlights of ${last.run_date} are unchanged from ${prev.run_date}; rewrite them for the new run`);
+  if (prev && 'headline' in last && last.headline === prev.headline) fail(file, `headline of ${last.run_date} is unchanged from ${prev.run_date}`);
   console.log(`${file}: ${runs.length} runs, newest ${last.run_date}`);
 }
 

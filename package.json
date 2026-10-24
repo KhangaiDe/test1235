@@ -8,7 +8,8 @@
     "start": "next start",
     "lint": "eslint",
     "deploy": "next build && wrangler deploy",
-    "check:hub": "node scripts/check-hub-reports.mjs"
+    "check:hub": "node scripts/check-hub-reports.mjs",
+    "hub:update": "NODE_USE_ENV_PROXY=1 node scripts/hub-update.mjs"
   },
   "dependencies": {
     "@hookform/resolvers": "^5.9.2",
