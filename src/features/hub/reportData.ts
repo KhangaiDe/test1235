@@ -12,8 +12,9 @@ export interface RunScore {
 export interface RunSummary {
   date: string;
   scores: RunScore[];
-  /** The run's headline (coal) or first highlight (fx). */
+  /** The run's headline (coal) or first highlight (fx), in English and, where written, Mongolian. */
   lead: string;
+  leadMn?: string;
 }
 
 interface CoalRun {
@@ -23,6 +24,7 @@ interface CoalRun {
   overburden_score: number;
   overburden_band: Band;
   headline: string;
+  headline_mn?: string;
 }
 
 interface FxRun {
@@ -30,6 +32,7 @@ interface FxRun {
   index: number;
   band: Band;
   highlights: string[];
+  highlights_mn?: string[];
 }
 
 function summarise(report: HubReport, run: CoalRun | FxRun): RunSummary {
@@ -42,10 +45,16 @@ function summarise(report: HubReport, run: CoalRun | FxRun): RunSummary {
         { label: 'Хөрс хуулалт', value: Math.round(r.overburden_score), band: r.overburden_band },
       ],
       lead: r.headline,
+      leadMn: r.headline_mn,
     };
   }
   const r = run as FxRun;
-  return { date: r.run_date, scores: [{ label: 'Эрсдэлийн индекс', value: r.index, band: r.band }], lead: r.highlights[0] ?? '' };
+  return {
+    date: r.run_date,
+    scores: [{ label: 'Эрсдэлийн индекс', value: r.index, band: r.band }],
+    lead: r.highlights[0] ?? '',
+    leadMn: r.highlights_mn?.[0],
+  };
 }
 
 /**
@@ -62,9 +71,5 @@ export async function loadRuns(report: HubReport, stamp: number): Promise<RunSum
   return state.runs.map((r) => summarise(report, r)).reverse();
 }
 
-const MON = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'];
-/** "24 Oct 2026", matching the dates inside the reports. */
-export const fmtRunDate = (iso: string) => {
-  const [y, m, d] = iso.split('-').map(Number);
-  return `${d} ${MON[m - 1]} ${y}`;
-};
+/** "2026.10.24", like the other dates in the Mongolian UI. */
+export const fmtRunDate = (iso: string) => iso.replace(/-/g, '.');

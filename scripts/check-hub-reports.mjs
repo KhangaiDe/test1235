@@ -19,6 +19,27 @@ const REPORTS = [
 ];
 
 const failures = [];
+
+/** Paths where the newest run lacks a Mongolian field the previous run had, or kept it while the English changed. */
+function mnProblems(prev, now, path) {
+  const out = [];
+  if (!prev || typeof now !== 'object' || now === null) return out;
+  if (Array.isArray(now)) {
+    now.forEach((x, i) => out.push(...mnProblems(Array.isArray(prev) ? prev[i] : undefined, x, `${path}[${i}]`)));
+    return out;
+  }
+  for (const k of Object.keys(prev)) {
+    if (!k.endsWith('_mn')) continue;
+    const en = k.slice(0, -3);
+    // Signal change words ("no change", "worse (was 1)") are written in both languages by hub-update.
+    if (!(en in now) || en === 'change') continue;
+    if (!(k in now)) out.push(`text missing at ${path}.${en}`);
+    else if (JSON.stringify(now[en]) !== JSON.stringify(prev[en]) && JSON.stringify(now[k]) === JSON.stringify(prev[k]))
+      out.push(`text not updated at ${path}.${en}`);
+  }
+  for (const k of Object.keys(now)) if (!k.endsWith('_mn')) out.push(...mnProblems(prev[k], now[k], `${path}.${k}`));
+  return out;
+}
 const fail = (file, msg) => failures.push(`${file}: ${msg}`);
 
 function readState(file, stateId) {
@@ -56,6 +77,9 @@ for (const { file, stateId } of REPORTS) {
   if (prev && JSON.stringify(last.highlights) === JSON.stringify(prev.highlights))
     fail(file, `highlights of ${last.run_date} are unchanged from ${prev.run_date}; rewrite them for the new run`);
   if (prev && 'headline' in last && last.headline === prev.headline) fail(file, `headline of ${last.run_date} is unchanged from ${prev.run_date}`);
+  // Mongolian (?lang=mn): every *_mn text the previous run had must exist in the newest run,
+  // and must change wherever the English changed (hub-update copies the old translation forward).
+  if (prev) for (const msg of mnProblems(prev, last, '')) fail(file, `Mongolian ${msg}`);
   console.log(`${file}: ${runs.length} runs, newest ${last.run_date}`);
 }
 

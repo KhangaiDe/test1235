@@ -9,6 +9,7 @@
 export type ReportMode = 'short' | 'long';
 
 const STORAGE_KEY = 'mcorp.hub.mode';
+const LANG_KEY = 'mcorp.hub.lang';
 const HIGHLIGHTS_SHOWN = 4;
 /** A lead sentence shorter than this also gets the next one, so "Both scores rose." isn't left alone. */
 const MIN_LEAD = 60;
@@ -18,6 +19,25 @@ export function readMode(): ReportMode {
     return window.localStorage.getItem(STORAGE_KEY) === 'long' ? 'long' : 'short';
   } catch {
     return 'short';
+  }
+}
+
+/** Report language: Mongolian unless the viewer picked English. */
+export type ReportLang = 'mn' | 'en';
+
+export function readLang(): ReportLang {
+  try {
+    return window.localStorage.getItem(LANG_KEY) === 'en' ? 'en' : 'mn';
+  } catch {
+    return 'mn';
+  }
+}
+
+function saveLang(lang: ReportLang) {
+  try {
+    window.localStorage.setItem(LANG_KEY, lang);
+  } catch {
+    // the choice just won't be remembered
   }
 }
 
@@ -73,7 +93,7 @@ function prepare(doc: Document) {
 
 /** Where the lead ends: after the first sentence, or the second if the first is very short. */
 function leadLength(text: string) {
-  const ends = /[.!?](?=\s+[A-Z])/g;
+  const ends = /[.!?](?=\s+[A-ZА-ЯЁӨҮ])/g;
   for (let m = ends.exec(text); m; m = ends.exec(text)) {
     if (m.index + 1 >= MIN_LEAD) return m.index + 1;
   }
@@ -97,6 +117,36 @@ const OPTIONS: { id: ReportMode; label: string }[] = [
   { id: 'short', label: 'Товч' },
   { id: 'long', label: 'Дэлгэрэнгүй' },
 ];
+
+const LANGS: { id: ReportLang; label: string; name: string }[] = [
+  { id: 'mn', label: 'МН', name: 'Монгол' },
+  { id: 'en', label: 'EN', name: 'English' },
+];
+
+export function LangToggle({ lang, onChange }: { lang: ReportLang; onChange: (lang: ReportLang) => void }) {
+  return (
+    <div role="radiogroup" aria-label="Тайлангийн хэл" className="inline-flex h-10 rounded-xl border border-hairline bg-page p-1">
+      {LANGS.map((o) => (
+        <button
+          key={o.id}
+          type="button"
+          role="radio"
+          aria-checked={lang === o.id}
+          aria-label={o.name}
+          onClick={() => {
+            saveLang(o.id);
+            onChange(o.id);
+          }}
+          className={`rounded-lg px-2.5 text-sm transition focus-visible:outline-2 focus-visible:outline-fg ${
+            lang === o.id ? 'bg-field font-semibold' : 'text-fg-muted hover:bg-field'
+          }`}
+        >
+          {o.label}
+        </button>
+      ))}
+    </div>
+  );
+}
 
 export function ModeToggle({ mode, onChange }: { mode: ReportMode; onChange: (mode: ReportMode) => void }) {
   return (
