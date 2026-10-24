@@ -74,12 +74,11 @@ function prepare(doc: Document) {
 /** Where the lead ends: after the first sentence, or the second if the first is very short. */
 function leadLength(text: string) {
   const ends = /[.!?](?=\s+[A-Z])/g;
-  let end = text.length;
   for (let m = ends.exec(text); m; m = ends.exec(text)) {
-    end = m.index + 1;
-    if (end >= MIN_LEAD) break;
+    if (m.index + 1 >= MIN_LEAD) return m.index + 1;
   }
-  return end;
+  // Every sentence break comes before MIN_LEAD: keep the whole item.
+  return text.length;
 }
 
 export function applyMode(frame: HTMLIFrameElement | null, mode: ReportMode) {
