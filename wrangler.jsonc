@@ -15,7 +15,9 @@
     "run_worker_first": ["/hub/*"],
     "html_handling": "auto-trailing-slash",
     "not_found_handling": "404-page"
-  }
-  // Optional: serve newer Business hub reports without redeploying.
-  // "vars": { "HUB_SOURCE": "https://raw.githubusercontent.com/<you>/<repo>/main/hub" }
+  },
+  // Serve the Business hub reports straight from main on GitHub, so a merged daily update
+  // shows within GitHub's 5-minute cache instead of waiting for a rebuild. The Worker falls
+  // back to the bundled copy in public/hub/ if GitHub can't be reached.
+  "vars": { "HUB_SOURCE": "https://raw.githubusercontent.com/KhangaiDe/test1235/main/public/hub" }
 }
