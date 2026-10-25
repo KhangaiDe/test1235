@@ -125,11 +125,15 @@ async function officialRate() {
 }
 
 async function auctions() {
-  const body = await get('https://www.mongolbank.mn/mn/forex-auction/data', {
-    method: 'POST',
-    headers: { 'X-Requested-With': 'XMLHttpRequest' },
-  });
-  const rows = JSON.parse(body).data;
+  const fetchRows = async () =>
+    JSON.parse(
+      await get('https://www.mongolbank.mn/mn/forex-auction/data', {
+        method: 'POST',
+        headers: { 'X-Requested-With': 'XMLHttpRequest' },
+      }),
+    ).data;
+  // The table is over 1 MB and the download is sometimes cut short; one retry.
+  const rows = await fetchRows().catch(fetchRows);
   return rows.map((r) => {
     const spot = r.DESCRIPTION.split(/<br>|2\.\s*Своп/)[0];
     const sold = spot.match(/([\d.]+)\s*сая ам\.долларыг/);
